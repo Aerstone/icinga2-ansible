@@ -1,29 +1,35 @@
 ---
 - name: Install Mysql prerequisite
+  become: yes
   apt: name=python-mysqldb
 
 - name: Install Icinga2 IDO modules on Debian family
+  become: yes
   apt: name=icinga2-ido-mysql
        state=latest
 
 - name: Create a IDO Database for Icinga2
+  become: yes
   mysql_db: name={{ icinga2_db }}
             state=present
   register: icinga_ido_db
 
 - name: Create Icinga2 IDO Database User and configure Grants
+  become: yes
   mysql_user: name={{ icinga2_db_user }}
               password={{ icinga2_db_pass }}
               state=present
               priv="{{ icinga2_db }}.*:GRANT,INSERT,SELECT,UPDATE,DELETE,DROP,CREATE VIEW,INDEX,EXECUTE"
 
 - name: Import the IDO Schema on Icinga Web Database (only once)
+  become: yes
   mysql_db: name={{ icinga2_db }}
             state=import
             target={{ icinga2_web_mysql_schema_debian }}
   when: icinga_ido_db.changed == true
 
 - name: Configure Icinga2 Ido Mysql Feature
+  become: yes
   template: src=ido-mysql.conf.j2
             dest={{ icinga2_ido_mysql_conf }}
             backup=yes
@@ -33,6 +39,7 @@
   when: icinga2_ido_mysql_configuration is defined
 
 - name: Enable Icinga2 Ido Mysql Feature
+  become: yes
   command: "icinga2 feature enable ido-mysql"
   register: features_result
   changed_when: "'for these changes to take effect' in features_result.stdout"
@@ -40,23 +47,27 @@
    - restart icinga2
 
 - name: Install Icinga Web2 on Debian family
+  become: yes
   apt: name={{ item.package }}
        state=latest
   with_items: '{{ icinga2_web2_ui_deb }}'
   tags: icinga2-ansible-web2-ui-install
 
 - name: Create a Web Database for Icinga2
+  become: yes
   mysql_db: name={{ icinga2_web2_db }}
             state=present
   register: icinga_web_db
 
 - name: Create Icinga2 Web Database User and configure Grants
+  become: yes
   mysql_user: name={{ icinga2_web2_db_user }}
               password={{ icinga2_web2_db_pass }}
               state=present
               priv="{{ icinga2_web2_db }}.*:GRANT,INSERT,SELECT,UPDATE,DELETE,DROP,CREATE VIEW,INDEX,EXECUTE"
 
 - name: Import the Web Schema on Icinga Web Database (only once)
+  become: yes
   mysql_db: name={{ icinga2_web2_db }}
             state=import
             target={{ icinga2_web2_mysql_schema_debian }}
@@ -68,6 +79,7 @@
   when: web_server_daemon is not defined
 
 - name: Restart {{web_server_daemon}} and Icinga2 to Apply the Configuration
+  become: yes
   service: name={{ item }}
            state=restarted
            enabled=yes
@@ -76,15 +88,18 @@
     - icinga2
 
 - name: Add user www-data to group icingaweb2
+  become: yes
   user: name=www-data
         groups=icingaweb2
 
 - name: Adjust Directory Owner and Group
+  become: yes
   file: path=/etc/icingaweb2/modules owner=www-data group=icingaweb2 mode=0755
         state=directory
         recurse=yes
 
 - name: Create Directory Owner and Group
+  become: yes
   file: path=/etc/icingaweb2/modules/{{ item }} owner=www-data group=icingaweb2 mode=0755
         state=directory
   with_items:
