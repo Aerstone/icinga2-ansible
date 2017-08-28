@@ -1,5 +1,6 @@
 ---
 - name: Copy Main Icinga2 Configuration
+  become: yes
   template: src=icinga2.conf.j2
             dest={{ icinga2_main_conf }}
             backup=yes
@@ -11,6 +12,7 @@
    - restart icinga2
 
 - name: Copy Check Commands Configuration
+  become: yes
   template: src=icinga2_check_commands.j2
             dest={{ icinga2_conf_d }}/check_commands.conf
             backup=yes
